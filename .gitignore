@@ -15,3 +15,8 @@ uv.lock
 
 # mac
 .DS_Store
+
+
+# Added by cargo
+
+/target
