@@ -27,7 +27,11 @@ pub fn decode(path: &Path) -> Result<DecodedAudio> {
 
     if !output.status.success() {
         let message = String::from_utf8_lossy(&output.stderr);
-        bail!("FFmpeg could not decode {}: {}", path.display(), message.trim());
+        bail!(
+            "FFmpeg could not decode {}: {}",
+            path.display(),
+            message.trim()
+        );
     }
     if output.stdout.len() % 4 != 0 {
         bail!("FFmpeg returned malformed audio for {}", path.display());

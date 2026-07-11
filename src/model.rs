@@ -6,10 +6,12 @@ use anyhow::{Context, Result, bail};
 use bzip2::read::BzDecoder;
 use directories::ProjectDirs;
 use indicatif::{ProgressBar, ProgressStyle};
+use sha2::{Digest, Sha256};
 
 const MODEL_NAME: &str = "parakeet-unified-en-0.6b-int8";
 const ARCHIVE_ROOT: &str = "sherpa-onnx-nemo-parakeet-unified-en-0.6b-int8-non-streaming";
 const MODEL_URL: &str = "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-nemo-parakeet-unified-en-0.6b-int8-non-streaming.tar.bz2";
+const MODEL_SHA256: &str = "99f63605b3a85a54c250c0869670a687b7d6598a47bf2421515e1f839a76e150";
 
 pub struct ModelFiles {
     pub directory: PathBuf,
@@ -104,6 +106,7 @@ fn download_into(staging: &Path, destination: &Path) -> Result<()> {
 
     let mut source = response.body_mut().as_reader();
     let mut target = fs::File::create(&archive_path)?;
+    let mut checksum = Sha256::new();
     let mut buffer = [0_u8; 128 * 1024];
     loop {
         let count = source.read(&mut buffer)?;
@@ -111,6 +114,7 @@ fn download_into(staging: &Path, destination: &Path) -> Result<()> {
             break;
         }
         target.write_all(&buffer[..count])?;
+        checksum.update(&buffer[..count]);
         if let Some(bar) = &progress {
             bar.inc(count as u64);
         }
@@ -119,6 +123,14 @@ fn download_into(staging: &Path, destination: &Path) -> Result<()> {
         bar.finish_and_clear();
     }
     target.sync_all()?;
+    let actual_checksum = checksum
+        .finalize()
+        .iter()
+        .map(|byte| format!("{byte:02x}"))
+        .collect::<String>();
+    if actual_checksum != MODEL_SHA256 {
+        bail!("model checksum mismatch: expected {MODEL_SHA256}, received {actual_checksum}");
+    }
 
     let archive = fs::File::open(&archive_path)?;
     tar::Archive::new(BzDecoder::new(archive))

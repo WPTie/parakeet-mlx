@@ -66,9 +66,10 @@ fn aligned_tokens(
         if text.is_empty() {
             continue;
         }
-        let start = timestamps.get(index).copied().unwrap_or_else(|| {
-            output.last().map(|token| token.end).unwrap_or(0.0)
-        });
+        let start = timestamps
+            .get(index)
+            .copied()
+            .unwrap_or_else(|| output.last().map(|token| token.end).unwrap_or(0.0));
         let end = durations
             .get(index)
             .map(|duration| start + duration)
@@ -150,7 +151,12 @@ fn push_sentence(sentences: &mut Vec<Sentence>, tokens: Vec<Token>) {
 fn join_words(tokens: &[Token]) -> String {
     let mut text = String::new();
     for token in tokens {
-        if !text.is_empty() && !token.text.chars().all(|character| ",.!?;:。？！".contains(character)) {
+        if !text.is_empty()
+            && !token
+                .text
+                .chars()
+                .all(|character| ",.!?;:。？！".contains(character))
+        {
             text.push(' ');
         }
         text.push_str(&token.text);

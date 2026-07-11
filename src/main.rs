@@ -7,7 +7,7 @@ mod transcript;
 use std::fs;
 use std::time::Instant;
 
-use anyhow::{Context, Result, bail};
+use anyhow::{Context, Result};
 use clap::Parser;
 use indicatif::{ProgressBar, ProgressStyle};
 use sherpa_onnx::{OfflineRecognizer, OfflineRecognizerConfig, OfflineTransducerModelConfig};
@@ -27,7 +27,11 @@ fn run() -> Result<()> {
     let cli = Cli::parse();
     cli.validate()?;
 
-    let model = ModelFiles::resolve(cli.model_dir.as_deref(), cli.cache_dir.as_deref(), cli.force_download)?;
+    let model = ModelFiles::resolve(
+        cli.model_dir.as_deref(),
+        cli.cache_dir.as_deref(),
+        cli.force_download,
+    )?;
     if cli.download_model {
         println!("{}", model.directory.display());
         return Ok(());
@@ -42,8 +46,10 @@ fn run() -> Result<()> {
     } else {
         let bar = ProgressBar::new(cli.audio_files.len() as u64);
         bar.set_style(
-            ProgressStyle::with_template("{spinner:.cyan} [{elapsed_precise}] {wide_msg} {pos}/{len}")
-                .expect("valid progress template"),
+            ProgressStyle::with_template(
+                "{spinner:.cyan} [{elapsed_precise}] {wide_msg} {pos}/{len}",
+            )
+            .expect("valid progress template"),
         );
         bar
     };
@@ -120,5 +126,6 @@ fn create_recognizer(model: &ModelFiles, threads: i32, verbose: bool) -> Result<
     config.model_config.debug = verbose;
     config.decoding_method = Some("greedy_search".into());
 
-    OfflineRecognizer::create(&config).ok_or_else(|| anyhow::anyhow!("failed to initialize Parakeet"))
+    OfflineRecognizer::create(&config)
+        .ok_or_else(|| anyhow::anyhow!("failed to initialize Parakeet"))
 }

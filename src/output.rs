@@ -1,5 +1,5 @@
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use anyhow::{Context, Result};
 use chrono::Local;
@@ -39,8 +39,11 @@ pub fn write_all(
         if let Some(parent) = path.parent() {
             fs::create_dir_all(parent)?;
         }
-        fs::write(&path, content)
-            .with_context(|| format!("failed to write {}", path.display()))?;
+        let temporary = path.with_extension(format!("{extension}.tmp-{}", std::process::id()));
+        fs::write(&temporary, content)
+            .with_context(|| format!("failed to write {}", temporary.display()))?;
+        fs::rename(&temporary, &path)
+            .with_context(|| format!("failed to finalize {}", path.display()))?;
     }
     Ok(())
 }
