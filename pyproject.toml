@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "awaz-mlx"
+version = "0.2.0"
+description = "Apple Silicon speech recognition using NVIDIA Parakeet and MLX"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "Apache-2.0"
+dependencies = [
+    "parakeet-mlx==0.5.2",
+]
+keywords = [
+    "mlx",
+    "parakeet",
+    "asr",
+    "apple-silicon",
+    "speech-recognition",
+]
+
+[project.urls]
+Repository = "https://github.com/WPTie/parakeet-mlx"
+Upstream = "https://github.com/senstella/parakeet-mlx"
+
+[project.scripts]
+awaz-mlx = "awaz_mlx.cli:app"
+
+[tool.setuptools.packages.find]
+include = ["awaz_mlx*"]

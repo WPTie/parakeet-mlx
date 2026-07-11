@@ -1,172 +1,121 @@
 # awaz-mlx
 
-Fast, native speech-to-text for Apple Silicon and desktop systems. `awaz-mlx`
-is a Rust CLI powered by NVIDIA Parakeet Unified English 0.6B and ONNX Runtime.
-It has no Python runtime, virtual environment, or NeMo installation.
+Apple Silicon speech-to-text using NVIDIA Parakeet and Apple's
+[MLX](https://github.com/ml-explore/mlx) framework.
 
-## Features
-
-- Native, statically linked Rust executable
-- Latest unified English Parakeet 0.6B model
-- Space-efficient INT8 inference
-- Automatic, resumable-by-retry model cache
-- WAV, MP3, M4A, FLAC, Ogg, Opus, and other FFmpeg-supported inputs
-- Word timestamps and sentence segmentation
-- TXT, SRT, WebVTT, and structured JSON output
-- Bounded CPU threading and one model load for any number of input files
+`awaz-mlx` exposes the complete CLI from
+[senstella/parakeet-mlx](https://github.com/senstella/parakeet-mlx) 0.5.2 under
+an additional command name. It uses MLX directly—there is no ONNX Runtime or
+ONNX model conversion—and defaults to the same
+[`mlx-community/parakeet-tdt-0.6b-v3`](https://huggingface.co/mlx-community/parakeet-tdt-0.6b-v3)
+model.
 
 ## Requirements
 
-- macOS on Apple Silicon, Linux x86-64/aarch64, or Windows x86-64
-- Rust 1.85 or newer when building from source
+- macOS on Apple Silicon
+- Python 3.10 or newer
 - FFmpeg available on `PATH`
-- About 1 GB of free space for the quantized model cache
-
-Install FFmpeg on macOS:
 
 ```console
 brew install ffmpeg
 ```
 
-## Install
+## Installation
+
+Using [uv](https://docs.astral.sh/uv/):
 
 ```console
-cargo install --path .
+uv tool install .
 ```
 
-For an optimized local build:
+Using pip:
 
 ```console
-cargo build --release
-./target/release/awaz-mlx --help
+pip install .
 ```
+
+The installation provides `awaz-mlx`. The upstream dependency also provides
+the equivalent `parakeet-mlx` command.
 
 ## Usage
 
-The model is downloaded once on first use and then loaded from the operating
-system's standard cache directory.
+```console
+awaz-mlx AUDIO_FILES... [OPTIONS]
+```
+
+The default output is an SRT transcript in the current directory.
+
+### Options
+
+- `--model` (default: `mlx-community/parakeet-tdt-0.6b-v3`, env:
+  `PARAKEET_MODEL`) — Hugging Face model repository.
+- `--output-dir` (default: current directory) — output directory.
+- `--output-format` (default: `srt`, env: `PARAKEET_OUTPUT_FORMAT`) —
+  `txt`, `srt`, `vtt`, `json`, or `all`.
+- `--output-template` (default: `{filename}`, env:
+  `PARAKEET_OUTPUT_TEMPLATE`) — supports `{parent}`, `{filename}`, `{index}`,
+  and `{date}`.
+- `--highlight-words` — add word-level highlighting and timestamps to SRT/VTT.
+- `--verbose`, `-v` — print progress and debugging details.
+- `--decoding` (default: `greedy`, env: `PARAKEET_DECODING`) — `greedy` or
+  `beam`; beam decoding currently requires a TDT model.
+- `--chunk-duration` (default: `120`, env: `PARAKEET_CHUNK_DURATION`) —
+  long-audio chunk size in seconds; use `0` to disable.
+- `--overlap-duration` (default: `15`, env: `PARAKEET_OVERLAP_DURATION`) —
+  chunk overlap in seconds.
+- `--beam-size` (default: `5`, env: `PARAKEET_BEAM_SIZE`).
+- `--length-penalty` (default: `0.013`, env: `PARAKEET_LENGTH_PENALTY`).
+- `--patience` (default: `3.5`, env: `PARAKEET_PATIENCE`).
+- `--duration-reward` (default: `0.67`, env: `PARAKEET_DURATION_REWARD`).
+- `--max-words` (env: `PARAKEET_MAX_WORDS`) — maximum words per sentence.
+- `--silence-gap` (env: `PARAKEET_SILENCE_GAP`) — split sentences at a
+  silence gap in seconds.
+- `--max-duration` (env: `PARAKEET_MAX_DURATION`) — maximum sentence duration.
+- `--fp32` / `--bf16` (default: `bf16`, env: `PARAKEET_FP32`) — inference
+  precision.
+- `--local-attention` / `--full-attention` (default: full attention, env:
+  `PARAKEET_LOCAL_ATTENTION`) — use local attention to reduce intermediate
+  memory use.
+- `--local-attention-context-size` (default: `256`, env:
+  `PARAKEET_LOCAL_ATTENTION_CTX`) — local attention window in frames.
+- `--cache-dir` (env: `PARAKEET_CACHE_DIR`) — Hugging Face cache directory.
+- `--version` — show the installed Parakeet MLX version.
+- `--help` — show command help.
+
+## Examples
 
 ```console
-# Generate an SRT subtitle
-awaz-mlx meeting.m4a
+# Basic transcription
+awaz-mlx audio.mp3
 
-# Transcribe several files and emit every format
-awaz-mlx interview.wav podcast.mp3 --output-format all --output-dir transcripts
+# Multiple files with word-level WebVTT timestamps
+awaz-mlx *.mp3 --output-format vtt --highlight-words
 
-# Word-highlighted WebVTT with shorter cues
-awaz-mlx talk.mp3 --output-format vtt --highlight-words --max-words 12
+# Beam decoding and all output formats
+awaz-mlx audio.mp3 --decoding beam --beam-size 5 --output-format all
 
-# Split cues around pauses and cap their duration
-awaz-mlx lecture.flac --silence-gap 1.5 --max-duration 8
-
-# Download the model ahead of time
-awaz-mlx --download-model
-
-# Use a separately managed model directory
-awaz-mlx audio.wav --model-dir /models/parakeet-unified-int8
+# Long audio without chunking, using local attention
+awaz-mlx long.wav --chunk-duration 0 --local-attention
 ```
 
-Run `awaz-mlx --help` for all options. `AWAZ_CACHE_DIR` overrides the default
-model cache. A custom model directory must contain:
+## Python API
 
-```text
-encoder.int8.onnx
-decoder.int8.onnx
-joiner.int8.onnx
-tokens.txt
+Use the upstream `parakeet_mlx` module directly:
+
+```python
+from parakeet_mlx import from_pretrained
+
+model = from_pretrained("mlx-community/parakeet-tdt-0.6b-v3")
+result = model.transcribe("audio.wav")
+print(result.text)
 ```
 
-## How it works
+The upstream API also includes greedy and beam decoding, chunking, local
+attention, sentence controls, streaming transcription, direct log-Mel input,
+and TDT, RNNT, CTC, and TDT-CTC model variants.
 
-```text
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                            awaz-mlx process                                 │
-└─────────────────────────────────────────────────────────────────────────────┘
-                                      │
-                                      ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ CLI parser                                                                  │
-│ • validates input paths and output settings                                 │
-│ • selects CPU thread count                                                  │
-│ • resolves managed or user-supplied model directory                         │
-└─────────────────────────────────────┬───────────────────────────────────────┘
-                                      │
-                   cache miss ┌───────┴────────┐ cache hit
-                              ▼                ▼
-┌──────────────────────────────────────┐   ┌──────────────────────────────────┐
-│ Model manager                        │   │ Existing model validation        │
-│ HTTPS download → temporary archive   │   │ encoder + decoder + joiner       │
-│ → bzip2 stream → safe tar extraction │   │ + token vocabulary               │
-│ → atomic move into platform cache    │   └────────────────┬─────────────────┘
-└───────────────────┬──────────────────┘                    │
-                    └──────────────────┬─────────────────────┘
-                                       ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ Native sherpa-onnx / ONNX Runtime recognizer                               │
-│ • loads INT8 model once                                                     │
-│ • creates an isolated inference stream for each input                       │
-│ • uses a bounded CPU worker pool                                            │
-└─────────────────────────────────────┬───────────────────────────────────────┘
-                                      │
-                    for each audio file│
-                                      ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ FFmpeg decoder                                                              │
-│ input container/codec → mono → 16 kHz → little-endian float32 PCM           │
-└─────────────────────────────────────┬───────────────────────────────────────┘
-                                      ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ Parakeet Unified English 0.6B                                               │
-│                                                                             │
-│ PCM samples                                                                 │
-│   │                                                                         │
-│   ├─► 128-bin log-Mel feature extraction                                    │
-│   │        │                                                                │
-│   │        ▼                                                                │
-│   ├─► Conformer encoder (24 layers, relative attention, 8× subsampling)     │
-│   │        │                                                                │
-│   │        ▼                                                                │
-│   ├─► Transducer prediction network ◄── previous token                      │
-│   │        │                                                                │
-│   │        ▼                                                                │
-│   └─► Joint network → token/duration probabilities → greedy decoding        │
-│                                                                             │
-│ output: text + BPE tokens + token timestamps + token durations              │
-└─────────────────────────────────────┬───────────────────────────────────────┘
-                                      ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ Transcript normalizer                                                       │
-│ • joins BPE pieces into timed words                                          │
-│ • attaches punctuation                                                      │
-│ • splits sentences on punctuation, silence, word count, or duration         │
-└─────────────────────────────────────┬───────────────────────────────────────┘
-                                      ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ Output renderers                                                            │
-│ TXT ─ plain text     SRT/VTT ─ subtitle cues     JSON ─ full timing tree    │
-│                                                                             │
-│ output template → output directory → atomic per-file write                  │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
+## License
 
-## Performance
-
-The release profile enables thin LTO, a single code-generation unit, and symbol
-stripping. The model is loaded only once per command, audio conversion is done
-in one FFmpeg process per file, and INT8 weights reduce memory bandwidth. Set
-`--threads` to tune inference for your machine; the default uses up to eight
-logical CPUs.
-
-## Model and licenses
-
-The source code is licensed under Apache-2.0.
-
-The automatically downloaded model is
-[NVIDIA Parakeet Unified English 0.6B](https://huggingface.co/nvidia/parakeet-unified-en-0.6b).
-Its weights are separately licensed under
-[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). NVIDIA and NeMo are
-the model authors; model use remains subject to the model card's terms,
-limitations, and safety information.
-
-Inference uses [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx), licensed
-under Apache-2.0, and ONNX Runtime, licensed under MIT.
+The wrapper is licensed under Apache-2.0. The upstream `parakeet-mlx`
+dependency is also Apache-2.0. Model weights have their own license and usage
+terms on Hugging Face.

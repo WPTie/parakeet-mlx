@@ -1,0 +1,7 @@
+awaz-mlx
+
+This product delegates Parakeet inference and its command-line interface to
+parakeet-mlx, developed by senstella and contributors:
+https://github.com/senstella/parakeet-mlx
+
+parakeet-mlx is distributed under the Apache License 2.0.
