@@ -1,0 +1,34 @@
+{
+  "name": "awaz-mlx-ts",
+  "version": "0.1.0",
+  "description": "TypeScript CLI for Apple Silicon speech recognition using NVIDIA Parakeet and MLX",
+  "type": "module",
+  "bin": {
+    "awaz-mlx-ts": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "start": "node dist/cli.js"
+  },
+  "keywords": [
+    "mlx",
+    "parakeet",
+    "asr",
+    "apple-silicon",
+    "speech-recognition",
+    "typescript"
+  ],
+  "license": "Apache-2.0",
+  "dependencies": {
+    "commander": "^15.0.0",
+    "execa": "^9.6.1"
+  },
+  "devDependencies": {
+    "typescript": "^7.0.2",
+    "@types/node": "^22.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

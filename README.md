@@ -3,17 +3,22 @@
 Apple Silicon speech-to-text using NVIDIA Parakeet and Apple's
 [MLX](https://github.com/ml-explore/mlx) framework.
 
-`awaz-mlx` exposes the complete CLI from
-[senstella/parakeet-mlx](https://github.com/senstella/parakeet-mlx) 0.5.2 under
-an additional command name. It uses MLX directly—there is no ONNX Runtime or
-ONNX model conversion—and defaults to the same
+This repository ships **two CLIs**:
+
+| Command | Runtime | Description |
+|---|---|---|
+| `awaz-mlx` | Python | Re-exports the upstream [senstella/parakeet-mlx](https://github.com/senstella/parakeet-mlx) 0.5.2 CLI |
+| `awaz-mlx-ts` | Node.js (TypeScript) | TypeScript CLI rewrite — full feature parity, same MLX model |
+
+Both commands default to the
 [`mlx-community/parakeet-tdt-0.6b-v3`](https://huggingface.co/mlx-community/parakeet-tdt-0.6b-v3)
-model.
+model and use MLX directly — no ONNX Runtime or model conversion.
 
 ## Requirements
 
 - macOS on Apple Silicon
-- Python 3.10 or newer
+- Python 3.10 or newer (required by both CLIs — MLX inference runs in Python)
+- Node.js 18 or newer (required by `awaz-mlx-ts` only)
 - FFmpeg available on `PATH`
 
 ```console
@@ -21,6 +26,8 @@ brew install ffmpeg
 ```
 
 ## Installation
+
+### Python CLI (`awaz-mlx`)
 
 Using [uv](https://docs.astral.sh/uv/):
 
@@ -37,7 +44,26 @@ pip install .
 The installation provides `awaz-mlx`. The upstream dependency also provides
 the equivalent `parakeet-mlx` command.
 
+### TypeScript CLI (`awaz-mlx-ts`)
+
+`awaz-mlx-ts` delegates inference to `parakeet-mlx` (which must be installed
+first — see above) and handles CLI arg parsing, output formatting, and file
+writing entirely in TypeScript/Node.js.
+
+```console
+cd ts-cli
+npm install
+npm run build
+# Run directly:
+node dist/cli.js --help
+# Or link globally:
+npm link
+```
+
 ## Usage
+
+Both CLIs accept the same arguments. Replace `awaz-mlx` with `awaz-mlx-ts`
+to use the TypeScript version.
 
 ```console
 awaz-mlx AUDIO_FILES... [OPTIONS]
