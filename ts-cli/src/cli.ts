@@ -286,7 +286,7 @@ async function main(): Promise<void> {
     }
 
     try {
-      const result = await transcribe(audioFile, opts, i);
+      const result = await transcribe(audioFile, opts, i, now);
       const formatted = formatAll(result, opts.outputFormat, opts.highlightWords);
       const stem = buildStem(audioFile, opts.outputDir, opts.outputTemplate, i, now);
 

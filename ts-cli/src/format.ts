@@ -52,8 +52,8 @@ function srtWordHighlightCues(
   return sentence.tokens
     .map((token, i) => {
       const highlighted = sentence.tokens
-        .map((t, j) => (j === i ? `<u>${t.text}</u>` : t.text))
-        .join("");
+        .map((t, j) => (j === i ? `<u>${t.text.trim()}</u>` : t.text.trim()))
+        .join(" ");
       return `${baseIndex + i}\n${toSrtTimestamp(token.start)} --> ${toSrtTimestamp(token.end)}\n${highlighted}\n`;
     })
     .join("\n");
@@ -67,7 +67,7 @@ function vttWordHighlightCue(sentence: AlignedSentence): string {
   const tagged = sentence.tokens
     .map(
       (t: AlignedToken) =>
-        `<${toVttTimestamp(t.start)}><c>${t.text}</c>`
+        `<${toVttTimestamp(t.start)}><c>${t.text.trim()}</c>`
     )
     .join(" ");
   return `${toVttTimestamp(sentence.start)} --> ${toVttTimestamp(sentence.end)}\n${tagged}\n`;

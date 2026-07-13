@@ -124,9 +124,10 @@ async function readJsonResult(
   audioFile: string,
   outputDir: string,
   outputTemplate: string,
-  fileIndex: number
+  fileIndex: number,
+  date: Date
 ): Promise<TranscriptionResult> {
-  const stem = buildStem(audioFile, outputDir, outputTemplate, fileIndex, new Date());
+  const stem = buildStem(audioFile, outputDir, outputTemplate, fileIndex, date);
   const jsonPath = path.join(outputDir, `${stem}.json`);
   const raw = await readFile(jsonPath, "utf8");
   return JSON.parse(raw) as TranscriptionResult;
@@ -139,7 +140,8 @@ async function readJsonResult(
 export async function transcribe(
   audioFile: string,
   opts: CliOptions,
-  fileIndex: number
+  fileIndex: number,
+  date: Date
 ): Promise<TranscriptionResult> {
   const exe = await resolveExecutable();
   const args = buildArgs(audioFile, opts);
@@ -165,6 +167,6 @@ export async function transcribe(
     );
   }
 
-  return readJsonResult(audioFile, opts.outputDir, opts.outputTemplate, fileIndex);
+  return readJsonResult(audioFile, opts.outputDir, opts.outputTemplate, fileIndex, date);
 }
 
