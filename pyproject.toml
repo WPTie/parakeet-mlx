@@ -1,36 +1,31 @@
 [build-system]
-requires = ["setuptools>=42", "wheel"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "parakeet-mlx"
-version = "0.5.2"
-description = "An implementation of the Nvidia's Parakeet models for Apple Silicon using MLX."
+name = "awaz-mlx"
+version = "0.2.0"
+description = "Apple Silicon speech recognition using NVIDIA Parakeet and MLX"
 readme = "README.md"
 requires-python = ">=3.10"
-dependencies = [
-    "dacite>=1.9.2",
-    "huggingface-hub>=0.30.2",
-    "librosa>=0.11.0",
-    "mlx>=0.22.1",
-    "numpy>=2.2.5",
-    "typer>=0.15.3",
-]
 license = "Apache-2.0"
+dependencies = [
+    "parakeet-mlx==0.5.2",
+]
 keywords = [
     "mlx",
     "parakeet",
     "asr",
-    "nvidia",
-    "apple",
-    "speech",
-    "recognition",
-    "ml",
+    "apple-silicon",
+    "speech-recognition",
 ]
 
 [project.urls]
-Repository = "https://github.com/senstella/parakeet-mlx.git"
-Issues = "https://github.com/senstella/parakeet-mlx/issues"
+Repository = "https://github.com/WPTie/parakeet-mlx"
+Upstream = "https://github.com/senstella/parakeet-mlx"
 
 [project.scripts]
-parakeet-mlx = "parakeet_mlx.cli:app"
+awaz-mlx = "awaz_mlx.cli:app"
+
+[tool.setuptools.packages.find]
+include = ["awaz_mlx*"]
